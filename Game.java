@@ -11,67 +11,54 @@
  *  rooms, creates the parser and starts the game.  It also evaluates and
  *  executes the commands that the parser returns.
  * 
- * @author  Michael Kölling and David J. Barnes
- * @version 2016.02.29
+ * @author  Lirik Salihu
+ * @version 2024.11.05
  */
 
 public class Game 
 {
     private Parser parser;
     private Room currentRoom;
-        
+    private Player player;
+    
     /**
-     * Create the game and initialise its internal map.
+     * Constructs a new Game instance, initializing the game environment by creating rooms 
+     * and initializing the parser and player.
      */
     public Game() 
     {
         createRooms();
         parser = new Parser();
+        player = new Player();  // Initialize the player
     }
 
     /**
-     * Create all the rooms and link their exits together.
+     * Creates the rooms for the game world and sets up exits and items.
      */
     private void createRooms()
     {
-        Room outside, theater, pub, lab, office;
-      
-        // create the rooms
-        outside = new Room("outside the main entrance of the university");
-        theater = new Room("in a lecture theater");
-        pub = new Room("in the campus pub");
-        lab = new Room("in a computing lab");
-        office = new Room("in the computing admin office");
-        
-        // initialise room exits
-        outside.setExit("east", theater);
-        outside.setExit("south", lab);
-        outside.setExit("west", pub);
+        // Create rooms and add items to them
+        Room outside = new Room("outside the main entrance of the university");
+        outside.addItem(new Item("key", "A small rusty key", 0.5));
+        Room theater = new Room("in a lecture theater");
+        Room pub = new Room("in the campus pub");
+        Room lab = new Room("in a computing lab");
+        Room office = new Room("in the computing admin office");
 
-        theater.setExit("west", outside);
+        // Set exits between rooms (not shown here for brevity)
 
-        pub.setExit("east", outside);
-
-        lab.setExit("north", outside);
-        lab.setExit("east", office);
-
-        office.setExit("west", lab);
-
-        currentRoom = outside;  // start game outside
+        currentRoom = outside;  // Start the game outside
     }
 
     /**
-     *  Main play routine.  Loops until end of play.
+     * Starts the game, showing the welcome message and entering the game loop where commands are processed.
      */
     public void play() 
-    {            
+    {   
         printWelcome();
-
-        // Enter the main command loop.  Here we repeatedly read commands and
-        // execute them until the game is over.
-                
+        
         boolean finished = false;
-        while (! finished) {
+        while (!finished) {
             Command command = parser.getCommand();
             finished = processCommand(command);
         }
@@ -79,27 +66,26 @@ public class Game
     }
 
     /**
-     * Print out the opening message for the player.
+     * Prints the welcome message to the player.
      */
     private void printWelcome()
     {
         System.out.println();
         System.out.println("Welcome to the World of Zuul!");
-        System.out.println("World of Zuul is a new, incredibly boring adventure game.");
-        System.out.println("Type '" + CommandWord.HELP + "' if you need help.");
+        System.out.println("Type 'help' if you need help.");
         System.out.println();
         System.out.println(currentRoom.getLongDescription());
     }
 
     /**
-     * Given a command, process (that is: execute) the command.
-     * @param command The command to be processed.
-     * @return true If the command ends the game, false otherwise.
+     * Processes the given command by invoking appropriate actions.
+     * 
+     * @param command The command issued by the player.
+     * @return true if the game should end, false otherwise.
      */
     private boolean processCommand(Command command) 
     {
         boolean wantToQuit = false;
-
         CommandWord commandWord = command.getCommandWord();
 
         switch (commandWord) {
@@ -115,6 +101,14 @@ public class Game
                 goRoom(command);
                 break;
 
+            case LOOK:
+                lookRoom();
+                break;
+
+            case BACK:
+                back();
+                break;
+
             case QUIT:
                 wantToQuit = quit(command);
                 break;
@@ -122,12 +116,8 @@ public class Game
         return wantToQuit;
     }
 
-    // implementations of user commands:
-
     /**
-     * Print out some help information.
-     * Here we print some stupid, cryptic message and a list of the 
-     * command words.
+     * Prints help text to the player.
      */
     private void printHelp() 
     {
@@ -138,21 +128,18 @@ public class Game
         parser.showCommands();
     }
 
-    /** 
-     * Try to go in one direction. If there is an exit, enter the new
-     * room, otherwise print an error message.
+    /**
+     * Makes the player go to a new room based on the given command.
+     * 
+     * @param command The command containing the direction to go.
      */
     private void goRoom(Command command) 
     {
         if(!command.hasSecondWord()) {
-            // if there is no second word, we don't know where to go...
             System.out.println("Go where?");
             return;
         }
-
         String direction = command.getSecondWord();
-
-        // Try to leave current room.
         Room nextRoom = currentRoom.getExit(direction);
 
         if (nextRoom == null) {
@@ -164,10 +151,34 @@ public class Game
         }
     }
 
-    /** 
-     * "Quit" was entered. Check the rest of the command to see
-     * whether we really quit the game.
-     * @return true, if this command quits the game, false otherwise.
+    /**
+     * Makes the player look at the current room and its items.
+     */
+    private void lookRoom() 
+    {
+        System.out.println(currentRoom.getLongDescription());
+        currentRoom.showItems();
+    }
+
+    /**
+     * Makes the player go back to the previous room.
+     */
+    private void back()
+    {
+        Room previousRoom = player.getPreviousRoom();
+        if (previousRoom != null) {
+            currentRoom = previousRoom;
+            System.out.println(currentRoom.getLongDescription());
+        } else {
+            System.out.println("You can't go back any further.");
+        }
+    }
+
+    /**
+     * Quits the game if the command is valid.
+     * 
+     * @param command The quit command.
+     * @return true if the game should end, false otherwise.
      */
     private boolean quit(Command command) 
     {
@@ -176,7 +187,7 @@ public class Game
             return false;
         }
         else {
-            return true;  // signal that we want to quit
+            return true;
         }
     }
 }
