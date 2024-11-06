@@ -1,6 +1,7 @@
 import java.util.Set;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
  * Class Room - a room in an adventure game.
@@ -12,81 +13,91 @@ import java.util.Iterator;
  * connected to other rooms via exits.  For each existing exit, the room 
  * stores a reference to the neighboring room.
  * 
- * @author  Michael Kölling and David J. Barnes
- * @version 2016.02.29
+ * @author  Lirik Salihu
+ * @version 2024.11.05
  */
 
 public class Room 
 {
     private String description;
-    private HashMap<String, Room> exits;        // stores exits of this room.
+    private HashMap<String, Room> exits; 
+    private ArrayList<Item> items;  // Items in the room
 
     /**
-     * Create a room described "description". Initially, it has
-     * no exits. "description" is something like "a kitchen" or
-     * "an open court yard".
-     * @param description The room's description.
+     * Creates a room with a specified description. Initially, the room
+     * has no exits and no items.
+     * 
+     * @param description A short description of the room (e.g., "in a library").
      */
-    public Room(String description) 
-    {
+    public Room(String description) {
         this.description = description;
         exits = new HashMap<>();
+        items = new ArrayList<>();  // Initialize item list
     }
 
     /**
-     * Define an exit from this room.
-     * @param direction The direction of the exit.
-     * @param neighbor  The room to which the exit leads.
+     * Sets an exit from this room in a given direction to a neighboring room.
+     * 
+     * @param direction The direction of the exit (e.g., "north", "south").
+     * @param neighbor The neighboring room in the specified direction.
      */
-    public void setExit(String direction, Room neighbor) 
-    {
+    public void setExit(String direction, Room neighbor) {
         exits.put(direction, neighbor);
     }
 
     /**
-     * @return The short description of the room
-     * (the one that was defined in the constructor).
+     * Adds an item to this room's list of items.
+     * 
+     * @param item The item to add to the room.
      */
-    public String getShortDescription()
-    {
-        return description;
+    public void addItem(Item item) {
+        items.add(item);
     }
 
     /**
-     * Return a description of the room in the form:
-     *     You are in the kitchen.
-     *     Exits: north west
-     * @return A long description of this room
+     * Provides a long description of this room, including available exits.
+     * 
+     * @return A string describing the room and its exits.
      */
-    public String getLongDescription()
-    {
+    public String getLongDescription() {
         return "You are " + description + ".\n" + getExitString();
     }
 
     /**
-     * Return a string describing the room's exits, for example
-     * "Exits: north west".
-     * @return Details of the room's exits.
+     * Displays a list of items currently in the room. If no items are present,
+     * informs the player that the room is empty.
      */
-    private String getExitString()
-    {
+    public void showItems() {
+        if (items.isEmpty()) {
+            System.out.println("There are no items here.");
+        } else {
+            for (Item item : items) {
+                System.out.println("Item: " + item.getName() + " - " + item.getDescription());
+            }
+        }
+    }
+
+    /**
+     * Generates a string listing all exits available from this room.
+     * 
+     * @return A string representing the available exits.
+     */
+    private String getExitString() {
         String returnString = "Exits:";
         Set<String> keys = exits.keySet();
-        for(String exit : keys) {
+        for (String exit : keys) {
             returnString += " " + exit;
         }
         return returnString;
     }
 
     /**
-     * Return the room that is reached if we go from this room in direction
-     * "direction". If there is no room in that direction, return null.
-     * @param direction The exit's direction.
-     * @return The room in the given direction.
+     * Retrieves the neighboring room in the specified direction.
+     * 
+     * @param direction The direction of the desired exit.
+     * @return The room in the specified direction, or null if no exit exists.
      */
-    public Room getExit(String direction) 
-    {
+    public Room getExit(String direction) {
         return exits.get(direction);
     }
 }
-
